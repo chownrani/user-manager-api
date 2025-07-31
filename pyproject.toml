@@ -8,7 +8,10 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.13, <4.0"
 dependencies = [
-    "fastapi[standard] (>=0.116.1,<0.117.0)"
+    "fastapi[standard] (>=0.116.1,<0.117.0)",
+    "pydantic-settings (>=2.10.1,<3.0.0)",
+    "sqlalchemy (>=2.0.42,<3.0.0)",
+    "alembic (>=1.16.4,<2.0.0)"
 ]
 
 [build-system]
@@ -41,7 +44,7 @@ addopts = '-p no:warnings'
 lint = 'ruff check'
 pre_format = 'ruff check --fix'
 format = 'ruff format'
-run = 'fastapi dev task_list/app.py'
+run = 'fastapi dev app/app.py'
 pre_test = 'task lint'
-test = 'pytest -s -x --cov=task_list -vv'
+test = 'pytest -s -x --cov=app -vv'
 post_test = 'coverage html'

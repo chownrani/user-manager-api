@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from fastapi import FastAPI, HTTPException
 
-from task_list.schemas import Message, UserDB, UserList, UserPublic, UserSchema
+from app.schemas import Message, UserDB, UserList, UserPublic, UserSchema
 
 app = FastAPI()
 
