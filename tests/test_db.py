@@ -18,3 +18,4 @@ def test_create_user(session, mock_db_time):
     assert user.password == "secret"
     assert user.email == "rani@example.com"
     assert user.created_at == time
+    assert user.updated_at == time
