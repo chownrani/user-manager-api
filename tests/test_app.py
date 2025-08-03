@@ -3,7 +3,7 @@ from http import HTTPStatus
 from fastapi.testclient import TestClient
 
 from app.models import User
-from app.schemas import UserPublic
+from app.schemas import Token, UserPublic
 
 
 def test_create_user(client: TestClient):
@@ -77,9 +77,10 @@ def test_read_user_by_id_not_found(client: TestClient):
     assert response.json() == {"detail": "User not found"}
 
 
-def test_update_user(client: TestClient, user: User):
+def test_update_user(client: TestClient, user: User, token: Token):
     response = client.put(
         "/users/1",
+        headers={"Authorization": f"Bearer {token}"},
         json={
             "username": "arthur",
             "email": "arthur@example.com",
@@ -95,9 +96,10 @@ def test_update_user(client: TestClient, user: User):
     }
 
 
-def test_not_user_on_update(client: TestClient, user: User):
+def test_not_user_on_update(client: TestClient, user: User, token: Token):
     response = client.put(
         "/users/999",
+        headers={"Authorization": f"Bearer {token}"},
         json={
             "username": "arthur",
             "email": "arthur@example.com",
@@ -105,11 +107,11 @@ def test_not_user_on_update(client: TestClient, user: User):
         },
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json() == {"detail": "User not found"}
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {"detail": "Not enough permissions"}
 
 
-def test_integrity_error(client: TestClient, user: User):
+def test_integrity_error(client: TestClient, user: User, token: Token):
     client.post(
         "/users",
         json={
@@ -121,6 +123,7 @@ def test_integrity_error(client: TestClient, user: User):
 
     response = client.put(
         f"/users/{user.id}",
+        headers={"Authorization": f"Bearer {token}"},
         json={
             "username": "gabriel",
             "email": "arthur@example.com",
@@ -132,15 +135,33 @@ def test_integrity_error(client: TestClient, user: User):
     assert response.json() == {"detail": "Username or email already exists"}
 
 
-def test_delete_user(client: TestClient, user: User):
-    response = client.delete("/users/1")
+def test_delete_user(client: TestClient, user: User, token: Token):
+    response = client.delete(
+        "/users/1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"message": "User deleted"}
 
 
-def test_not_user_on_delete(client: TestClient, user: User):
-    response = client.delete("/users/999")
+def test_not_user_on_delete(client: TestClient, user: User, token: Token):
+    response = client.delete(
+        "/users/999",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {"detail": "User not found"}
+
+
+def test_login_for_access_token(client: TestClient, user: User):
+    response = client.post(
+        "/token",
+        data={"username": user.email, "password": user.clean_password},
+    )
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert "access_token" in token
+    assert "token_type" in token
