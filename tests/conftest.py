@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime
+from http import HTTPStatus
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,18 +12,6 @@ from app.connection import db_handler
 from app.models import Base, User
 from app.routes import app
 from app.security import get_password_hash
-
-
-@pytest.fixture
-def client(session):
-    def get_session_override():
-        return session
-
-    with TestClient(app) as client:
-        app.dependency_overrides[db_handler.get_session] = get_session_override
-        yield client
-
-    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -38,6 +27,18 @@ def session():
         yield session
 
     Base.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def client(session):
+    def get_session_override():
+        return session
+
+    with TestClient(app) as client:
+        app.dependency_overrides[db_handler.get_session] = get_session_override
+        yield client
+
+    app.dependency_overrides.clear()
 
 
 @contextmanager
@@ -63,16 +64,18 @@ def mock_db_time():
 @pytest.fixture
 def user(session):
     password = "testtest"
+
     user = User(
         username="Teste",
         email="teste@test.com",
         password=get_password_hash(password),
     )
+
     session.add(user)
     session.commit()
     session.refresh(user)
 
-    user.clean_password = password
+    user.plain_password = password
 
     return user
 
@@ -80,7 +83,16 @@ def user(session):
 @pytest.fixture
 def token(client, user):
     response = client.post(
-        "/token",
-        data={"username": user.email, "password": user.clean_password},
+        "/login",
+        data={"username": user.email, "password": user.plain_password},
     )
     return response.json()["access_token"]
+
+
+@pytest.fixture
+def credentials_exception():
+    return {
+        "status_code": HTTPStatus.UNAUTHORIZED,
+        "detail": "Could not validate credentials",
+        "headers": {"WWW-Authenticate": "Bearer"},
+    }

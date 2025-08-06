@@ -59,6 +59,7 @@ def read_users(
     skip: int = 0,
     limit: int = 100,
     session: Session = Depends(db_handler.get_session),
+    current_user=Depends(get_current_user),
 ):
     users = session.scalars(select(User).offset(skip).limit(limit)).all()
     return {"users": users}
@@ -68,7 +69,9 @@ def read_users(
     "/users/{user_id}", status_code=HTTPStatus.OK, response_model=UserPublic
 )
 def read_user_by_id(
-    user_id: int, session: Session = Depends(db_handler.get_session)
+    user_id: int,
+    session: Session = Depends(db_handler.get_session),
+    current_user: User = Depends(get_current_user),
 ):
     db_user = session.scalar(select(User).where(User.id == user_id))
 
@@ -126,7 +129,7 @@ def delete_user(
     return {"message": "User deleted"}
 
 
-@app.post("/token", response_model=Token)
+@app.post("/login", response_model=Token)
 def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(db_handler.get_session),
@@ -145,6 +148,6 @@ def login_for_access_token(
             detail="Incorrect email or password",
         )
 
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_access_token(claims={"sub": user.email})
 
     return {"access_token": access_token, "token_type": "bearer"}
