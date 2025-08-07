@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from app.models import User
+from src.app.models.models import User
 
 
 def test_create_user(session, mock_db_time):

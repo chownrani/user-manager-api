@@ -8,10 +8,11 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from app.connection import db_handler
-from app.models import Base, User
-from app.routes import app
-from app.security import get_password_hash
+from src.app.database.connection import db_handler
+from src.app.models.models import Base, User
+from src.app.routers.app import app
+from src.app.security.security import get_password_hash
+from src.app.settings.settings import Settings
 
 
 @pytest.fixture
@@ -23,10 +24,12 @@ def session():
     )
     Base.metadata.create_all(engine)
 
-    with Session(engine) as session:
+    session = Session(engine)
+    try:
         yield session
-
-    Base.metadata.drop_all(engine)
+    finally:
+        session.close()
+        Base.metadata.drop_all(engine)
 
 
 @pytest.fixture
@@ -83,7 +86,7 @@ def user(session):
 @pytest.fixture
 def token(client, user):
     response = client.post(
-        "/login",
+        "/auth/login",
         data={"username": user.email, "password": user.plain_password},
     )
     return response.json()["access_token"]
@@ -96,3 +99,8 @@ def credentials_exception():
         "detail": "Could not validate credentials",
         "headers": {"WWW-Authenticate": "Bearer"},
     }
+
+
+@pytest.fixture
+def settings():
+    return Settings()

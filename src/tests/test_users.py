@@ -2,8 +2,8 @@ from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 
-from app.models import User
-from app.schemas import Token, UserPublic
+from src.app.models.models import User
+from src.app.schemas.schemas import Token, UserPublic
 
 
 def test_create_user(client: TestClient):
@@ -38,7 +38,7 @@ def test_create_username_already_exists(client: TestClient, user: User):
     assert response.json() == {"detail": "Username already exists"}
 
 
-def test_create_email_already_exists(client: TestClient, user: User):
+def test_create_user_email_already_exists(client: TestClient, user: User):
     response = client.post(
         "/users",
         json={"username": "rani", "email": user.email, "password": "secret"},
@@ -129,15 +129,3 @@ def test_delete_user(client: TestClient, user: User, token: Token):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"message": "User deleted"}
-
-
-def test_login_for_access_token(client: TestClient, user: User):
-    response = client.post(
-        "/login",
-        data={"username": user.email, "password": user.plain_password},
-    )
-    token = response.json()
-
-    assert response.status_code == HTTPStatus.OK
-    assert "access_token" in token
-    assert "token_type" in token

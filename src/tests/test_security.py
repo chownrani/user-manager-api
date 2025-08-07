@@ -1,24 +1,21 @@
 from http import HTTPStatus
 
-from fastapi.testclient import TestClient
 from jwt import decode
 
-from app.models import User
-from app.schemas import Token
-from app.security import ALGORITHM, SECRET_KEY, create_access_token
+from src.app.security.security import create_access_token
 
 
-def test_jwt():
+def test_jwt(settings):
     claims = {"test": "test"}
     token = create_access_token(claims)
 
-    decoded = decode(token, SECRET_KEY, algorithms=ALGORITHM)
+    decoded = decode(token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
 
     assert decoded["test"] == claims["test"]
     assert "exp" in decoded
 
 
-def test_jwt_invalid_token(client: TestClient):
+def test_jwt_invalid_token(client):
     response = client.delete(
         "/users/1",
         headers={"Authorization": "Bearer token-invalido"},
@@ -28,15 +25,15 @@ def test_jwt_invalid_token(client: TestClient):
     assert response.json() == {"detail": "Could not validate credentials"}
 
 
-def test_get_current_user(client: TestClient, token: Token, user: User):
+def test_get_current_user(client, token, user, settings):
     data = {"sub": user.email}
     token = create_access_token(data)
-    payload = decode(token, SECRET_KEY, algorithms=ALGORITHM)
+    payload = decode(token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
 
     assert payload.get("sub") == user.email
 
 
-def test_get_current_user_not_found(client: TestClient):
+def test_get_current_user_not_found(client):
     data = {"no-email": "test"}
     token = create_access_token(data)
 
