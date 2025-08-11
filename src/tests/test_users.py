@@ -97,7 +97,7 @@ def test_update_user(client: TestClient, user: User, token: Token):
     }
 
 
-def test_integrity_error(client: TestClient, user: User, token: Token):
+def test_update_integrity_error(client: TestClient, user: User, token: Token):
     client.post(
         "/users",
         json={

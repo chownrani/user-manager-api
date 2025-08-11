@@ -15,3 +15,6 @@ class User(Base):
     updated_at = Column(
         DateTime, server_default=func.now(), onupdate=func.now()
     )
+
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
