@@ -121,7 +121,14 @@ async def delete_user(
     session: Annotated[AsyncSession, Depends(db_handler.get_session)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail="Not enough permissions",
+        )
+
     user = await session.get(User, user_id)
+
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="User not found"

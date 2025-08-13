@@ -97,6 +97,23 @@ def test_update_user(client: TestClient, user: User, token: Token):
     }
 
 
+def test_update_user_without_permissions(
+    client: TestClient, other_user: User, token: Token
+):
+    response = client.put(
+        f"/users/{other_user.id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "username": "arthur",
+            "email": "arthur@example.com",
+            "password": "mynewpassword",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {"detail": "Not enough permissions"}
+
+
 def test_update_integrity_error(client: TestClient, user: User, token: Token):
     client.post(
         "/users",
@@ -129,3 +146,14 @@ def test_delete_user(client: TestClient, user: User, token: Token):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"message": "User deleted"}
+
+
+def test_delete_user_without_permissions(
+    client: TestClient, other_user: User, token: Token
+):
+    response = client.delete(
+        f"/users/{other_user.id}", headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.json() == {"detail": "Not enough permissions"}
