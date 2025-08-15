@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app.database.connection import db_handler
-from src.app.models.models import User
+from src.app.models.user import User
 from src.app.settings.settings import Settings
 
 pwd_context = PasswordHash.recommended()

@@ -11,9 +11,17 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from src.app.database.connection import db_handler
-from src.app.models.models import Base, User
+from src.app.dependencies.dependencies import (
+    get_auth_service,
+    get_user_repository,
+    get_user_service,
+)
+from src.app.models.user import Base, User
+from src.app.repositories.user_repository import UserRepository
 from src.app.routers.app import app
-from src.app.security.security import get_password_hash
+from src.app.security.security import get_password_hash, verify_password
+from src.app.services.auth_service import AuthService
+from src.app.services.user_service import UserService
 from src.app.settings.settings import Settings
 
 
@@ -23,11 +31,10 @@ class UserFactory(factory.Factory):
 
     username = factory.Sequence(lambda n: f"test{n}")
     email = factory.LazyAttribute(lambda obj: f"{obj.username}@test.com")
-    password = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
 
 
-@pytest_asyncio.fixture
-async def session():
+@pytest_asyncio.fixture(scope="function")
+async def engine():
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -37,11 +44,18 @@ async def session():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    async with AsyncSession(engine, expire_on_commit=False) as session:
-        yield session
+    yield engine
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def session(engine):
+    async with AsyncSession(engine, expire_on_commit=False) as session:
+        yield session
 
 
 @pytest.fixture
@@ -49,8 +63,25 @@ def client(session):
     def get_session_override():
         return session
 
+    def get_user_repository_override():
+        return UserRepository(session)
+
+    def get_auth_service_override():
+        user_repository = UserRepository(session)
+        return AuthService(user_repository)
+
+    def get_user_service_override():
+        user_repository = UserRepository(session)
+        return UserService(user_repository)
+
+    app.dependency_overrides[db_handler.get_session] = get_session_override
+    app.dependency_overrides[get_user_repository] = (
+        get_user_repository_override
+    )
+    app.dependency_overrides[get_auth_service] = get_auth_service_override
+    app.dependency_overrides[get_user_service] = get_user_service_override
+
     with TestClient(app) as client:
-        app.dependency_overrides[db_handler.get_session] = get_session_override
         yield client
 
     app.dependency_overrides.clear()
@@ -79,7 +110,12 @@ def mock_db_time():
 @pytest_asyncio.fixture
 async def user(session):
     password = "testtest"
-    user = UserFactory(password=get_password_hash(password))
+
+    user = User(
+        username="testuser",
+        email="testuser@test.com",
+        password=get_password_hash(password),
+    )
 
     session.add(user)
     await session.commit()
@@ -93,13 +129,18 @@ async def user(session):
 @pytest_asyncio.fixture
 async def other_user(session):
     password = "testtest"
-    user = UserFactory(password=get_password_hash(password))
+
+    user = User(
+        username="otheruser",
+        email="otheruser@test.com",
+        password=get_password_hash(password),
+    )
 
     session.add(user)
     await session.commit()
     await session.refresh(user)
 
-    user.clean_password = password
+    user.plain_password = password
 
     return user
 
@@ -125,3 +166,26 @@ def credentials_exception():
 @pytest.fixture
 def settings():
     return Settings()
+
+
+@pytest_asyncio.fixture
+async def debug_user(session):
+    password = "debug123"
+
+    user = User(
+        username="debuguser",
+        email="debug@test.com",
+        password=get_password_hash(password),
+    )
+
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+
+    user.plain_password = password
+
+    assert verify_password(password, user.password), (
+        "Password verification failed!"
+    )
+
+    return user

@@ -3,7 +3,7 @@ from http import HTTPStatus
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from src.app.models.models import User
+from src.app.models.user import User
 from src.app.schemas.schemas import Token
 
 

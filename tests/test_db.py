@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import select
 
-from src.app.models.models import User
+from src.app.models.user import User
 
 
 @pytest.mark.asyncio

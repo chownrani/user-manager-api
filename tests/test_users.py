@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 
-from src.app.models.models import User
+from src.app.models.user import User
 from src.app.schemas.schemas import Token, UserPublic
 
 
