@@ -9,7 +9,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(30), unique=True, nullable=False)
-    password = Column(String(50), nullable=False)
+    password = Column(String(255), nullable=False)
     email = Column(String, unique=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(

@@ -10,6 +10,7 @@ from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+from src.app.app import app
 from src.app.database.connection import db_handler
 from src.app.dependencies.dependencies import (
     get_auth_service,
@@ -18,7 +19,6 @@ from src.app.dependencies.dependencies import (
 )
 from src.app.models.user import Base, User
 from src.app.repositories.user_repository import UserRepository
-from src.app.routers.app import app
 from src.app.security.security import get_password_hash, verify_password
 from src.app.services.auth_service import AuthService
 from src.app.services.user_service import UserService
