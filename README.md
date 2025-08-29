@@ -5,7 +5,7 @@ Uma API REST moderna para gerenciamento de usuários construída com FastAPI, SQ
 ![Python](https://img.shields.io/badge/python-v3.13+-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.116+-green.svg)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-red.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)
 
 ## 🚀 Funcionalidades
 
@@ -284,3 +284,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 **Versão Atual**: 1.0.0  
 **Status**: ✅ Estável  
 **Última Atualização**: Agosto 2025
+
